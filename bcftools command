@@ -1,0 +1,102 @@
+REMOVE MULTIALLELIC INDELS
+bcftools view -m2 -M2 -v indels testPopulation.chr20.vcf.gz > testPopulation.chr20.indels.biallelelic.vcf.gz
+-m: min alleles
+-M: max alleles
+-v: include types
+
+SELECT INDELS ONLY
+bcftools view -v indels testPopulation.chr20.vcf.gz -Oz > testPopulation.chr20.indels.vcf.gz
+
+COUNT variants
+bcftools query -f 'pos=%POS\n' testPopulation.chr20.indels.biallelelic.vcf.gz | wc -l
+
+
+COMMON
+
+bcftools view -i 'MAF[0]>0.05' test.vcf.gz -Oz > test.common.vcf.gz
+
+
+
+LESS FREQUENT
+
+bcftools view -i 'MAF[0]>0.01 & MAF[0]<0.05' test.vcf.gz -Oz -o test.less.common.vcf.gz
+
+
+RARE
+bcftools view -i 'MAF[0]<0.01' test.vcf.gz -Oz -o test.rare.vcf.gz
+
+
+SIFT POLYPHEN ALL VARIANTS
+bcftools +split-vep testPopulation.chr20.vep.trial4.MAF5.vcf.gz -f '%CHROM:%POS %REF %ALT %SYMBOL %Gene %INFO/AF %Existing_variation %Consequence %PolyPhen %SIFT  %gnomAD_AF %EAS_AF %SAS_AF\n' -d -i 'SIFT~"deleterious"'> testPopulation.chr20.vep.trial4.MAF5.sift_deleterious.polyphen.txt
+
+bcftools +split-vep testPopulation.chr20.vep.trial4.MAF5.vcf.gz -f '%CHROM:%POS %REF %ALT %SYMBOL %Gene %INFO/AF %Existing_variation %Consequence %PolyPhen %SIFT  %gnomAD_AF %EAS_AF %SAS_AF\n' -d -i 'PolyPhen~"damaging"' > testPopulation.chr20.vep.trial4.MAF5.sift.polyphen_damaging.txt
+
+
+WORST
+bcftools +split-vep testPopulation.chr20.vep.trial4.snps.vcf.gz -f '%CHROM:%POS %REF %ALT %SYMBOL %Gene %INFO/AF %Existing_variation %Consequence %gnomAD_AF %AFR_AF %AMR_AF %EAS_AF %EUR_AF %SAS_AF %CLIN_SIG %PUBMED \n' -s worst > testPopulation.chr20.vep.trial4.snps.worst.txt
+
+CONSEQUENCE
+bcftools +split-vep -f '%CHROM:%POS %Existing_variation %Consequence %PolyPhen %SIFT %CLIN_SIG %AF %EAS_AF %SAS_AF' -d -A tab testPopulation.chr20.normalized.uniq.decomposed.trial5.vep.snps.less.frequent.vcf.gz > snps.less.frequent.consequence.txt
+
+MAF
+bcftools +split-vep -f '%CHROM:%POS %Existing_variation %INFO/AF %AF_1KGP \n' -d test.vcf.gz > test.MAF.txt
+
+change name for samples file
+sed -i '3428s/.*/##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|MINIMISED|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|GENE_PHENO|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|AF_1KGP|AFR_AF|AMR_AF|EAS_AF|EUR_AF|SAS_AF|AA_AF|EA_AF|gnomAD_AF|gnomAD_AFR_AF|gnomAD_AMR_AF|gnomAD_ASJ_AF|gnomAD_EAS_AF|gnomAD_FIN_AF|gnomAD_NFE_AF|gnomAD_OTH_AF|gnomAD_SAS_AF|MAX_AF|MAX_AF_POPS|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|gnomAD_exomes_controls_AF|gnomAD_exomes_controls_AFR_AF|gnomAD_exomes_controls_EAS_AF|gnomAD_exomes_controls_NFE_AF|gnomAD_exomes_controls_POPMAX_AF|gnomAD_genomes_controls_AF|gnomAD_genomes_controls_AFR_AF|gnomAD_genomes_controls_EAS_AF|gnomAD_genomes_controls_NFE_AF|gnomAD_genomes_controls_POPMAX_AF|ada_score|rf_score">/' test.vcf 
+
+Doublecheck
+head -3427 test.vcf | tail
+
+change name for clinvar file
+sed -i '29s/.*/##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|ALLELE_NUM|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|MINIMISED|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|GENE_PHENO|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|AF_1KGP|AFR_AF|AMR_AF|EAS_AF|EUR_AF|SAS_AF|AA_AF|EA_AF|gnomAD_AF|gnomAD_AFR_AF|gnomAD_AMR_AF|gnomAD_ASJ_AF|gnomAD_EAS_AF|gnomAD_FIN_AF|gnomAD_NFE_AF|gnomAD_OTH_AF|gnomAD_SAS_AF|MAX_AF|MAX_AF_POPS|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE">/' clinvar_20200609.min.temp.vep.vcf
+
+sed -i '3410s/.*/##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|GENE_PHENO|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|HGVSg|AF|AFR_AF|AMR_AF|EAS_AF|EUR_AF|SAS_AF|AA_AF|EA_AF|gnomAD_AF|gnomAD_AFR_AF|gnomAD_AMR_AF|gnomAD_ASJ_AF|gnomAD_EAS_AF|gnomAD_FIN_AF|gnomAD_NFE_AF|gnomAD_OTH_AF|gnomAD_SAS_AF|MAX_AF|MAX_AF_POPS|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|CADD_phred|FATHMM_converted_rankscore|FATHMM_pred|GERP++_RS|GenoCanyon_score|Interpro_domain|LRT_pred|M-CAP_pred|MetaLR_pred|MetaSVM_pred|MutationAssessor_pred|MutationTaster_pred|PROVEAN_score|SIFT_score|clinvar_clnsig|clinvar_review|fathmm-MKL_coding_pred|gnomAD_exomes_AF|gnomAD_genomes_AF|ada_score|rf_score">/' VN_01_00_0090_02_01.hard-filtered.vep.vcf
+
+extract info
+bcftools +split-vep -f '%CHROM:%POS %SYMBOL %Existing_variation %CLIN_SIG %INFO/AF %AF_1KGP %gnomAD_genomes_controls_AF %gnomAD_genomes_controls_EAS_AF %gnomAD_exomes_controls_AF %gnomAD_exomes_controls_EAS_AF \n' -d 504.chr20.vep.temp.vcf > 504.chr20.extract.txt
+
+bcftools +split-vep -f '%CHROM:%POS %SYMBOL %Existing_variation %CLIN_SIG %AF_1KGP \n' -d clinvar_20200609.min.vep.vcf.gz > clinvar.export.txt
+
+To avoid core dump, when use bcftools +split-vep, compress and index:
+bgzip
+bgzip -c file.vcf > file.vcf.gz
+
+tabix -p vcf file.vcf.gz
+
+stats: no. variants                 : 466115
+       no. biallelic variants       : 436959
+       no. multiallelic variants    : 29156
+
+       no. additional biallelics    : 76384
+       total no. of biallelics      : 542499
+
+Uncompress:
+bgzip -d test.vcf.gz > test.vcf
+
+vt:
+vt decompose -s gatk.vcf -o gatk.decomposed.vcf 
+
+Tapes:
+python3 tapes.py annotate -i input/test.chr20.snps.first10000.vcf -o output_2/test.chr20.snps.first10000.anno.vcf --acmg -a hg38 -A annovar/
+
+python3 tapes.py sort -i input/VN_01_00_0152_01_01.small.vep.plugin.vcf -o output_3/ --tab -a hg38 --acmg_db acmg_db/
+
+sed -i '3410s/.*/##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|SOURCE|GENE_PHENO|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|AF|AFR_AF|AMR_AF|EAS_AF|EUR_AF|SAS_AF|AA_AF|EA_AF|gnomAD_AF|gnomAD_AFR_AF|gnomAD_AMR_AF|gnomAD_ASJ_AF|gnomAD_EAS_AF|gnomAD_FIN_AF|gnomAD_NFE_AF|gnomAD_OTH_AF|gnomAD_SAS_AF|MAX_AF|MAX_AF_POPS|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|ada_score|rf_score|CADD_phred|FATHMM_converted_rankscore|FATHMM_pred|GERP++_RS|GenoCanyon_score|Interpro_domain|LRT_pred|M-CAP_pred|MetaLR_pred|MetaSVM_pred|MutationAssessor_pred|MutationTaster_pred|PROVEAN_score|SIFT_score|clinvar_clnsig|clinvar_golden_stars|fathmm-MKL_coding_pred|gnomAD_exomes_AF|gnomAD_genomes_AF|gnomADg|gnomADg_AF_AMR|gnomADg_AF_ASJ|gnomADg_AF_EAS|gnomADg_AF_FIN|gnomADg_AF_NFE|gnomADg_AF_OTH">/' VN_01_01_0046_01_01.hard-filtered.small.vep.plugin.vcf
+
+sed -i '3410s/.*/##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|FLAGS|VARIANT_CLASS|SYMBOL_SOURCE|HGNC_ID|CANONICAL|MANE|TSL|APPRIS|CCDS|ENSP|SWISSPROT|TREMBL|UNIPARC|SOURCE|GENE_PHENO|SIFT|PolyPhen|DOMAINS|miRNA|HGVS_OFFSET|AF|AFR_AF|AMR_AF|EAS_AF|EUR_AF|SAS_AF|AA_AF|EA_AF|gnomAD_AF|gnomAD_AFR_AF|gnomAD_AMR_AF|gnomAD_ASJ_AF|gnomAD_EAS_AF|gnomAD_FIN_AF|gnomAD_NFE_AF|gnomAD_OTH_AF|gnomAD_SAS_AF|MAX_AF|MAX_AF_POPS|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|ada_score|rf_score|CADD_phred|FATHMM_converted_rankscore|FATHMM_pred|GERP++_RS|GenoCanyon_score|Interpro_domain|LRT_pred|M-CAP_pred|MetaLR_pred|MetaSVM_pred|MutationAssessor_pred|MutationTaster_pred|PROVEAN_score|SIFT_score|clinvar_clnsig|clinvar_golden_stars|fathmm-MKL_coding_pred|gnomAD_exomes_AF|gnomAD_genomes_AF|gnomADg|gnomADg_AF_AMR|gnomADg_AF_ASJ|gnomADg_AF_EAS|gnomADg_AF_FIN|gnomADg_AF_NFE|gnomADg_AF_OTH">/' VN_01_01_0046_01_01.hard-filtered.vep.plugin.vcf
+
+filter_vep -i VN_01_00_0152_01_01.hard-filtered.vep.autosome.vcf -o VN_01_00_0152_01_01.adme.txt --filter "SYMBOL in ABCB1,ABCC2,ABCG2,CYP1A1,CYP1A2,CYP2A6,CYP2B6,CYP2C19,CYP2C8,CYP2C9,CYP2D6,CYP2E1,CYP3A4,CYP3A5,DPYD,GSTM1,GSTP1,GSTT1,NAT1,NAT2,SLC15A2,SLC22A1,SLC22A2,SLC22A6,SLCO1B1,SLCO2B1,SLCO1B3,SULT1A1,TPMT,UGT1A1,UGT2B15,UGT2B17,UGT2B7,VKORC1"
+
+# add chromosome annotation
+zcat clinvar_20200609.vcf.gz | awk -F"\t" '{if ($0 !~ /^#/) {print "chr"$0} else{print $0}}' | bgzip -c >clinvar_20200609.chr.vcf.gz
+
+# bedtools
+bedtools intersect -a testMASH_504.chr19.vqsr.pass.decompose.snps.vcf.gz -b rmsk.bed.gz > chr19.snps.repeats.vcf
+
+
+
+
+
+
+
+
